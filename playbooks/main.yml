@@ -1,8 +1,62 @@
 - hosts: webservers
 
+  ##vars:
+    ##playbooks_dir: /playbooks
+
   become: yes
 
   tasks:
     - name: create user ansible-worker
       user:
         name: ansible-worker
+        state: present
+
+    - name: install git
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+    
+    - name: add ssh key
+      authorized_key:
+        key: "{{ lookup('file', '../ssh_keys/id_rsa.pub') }}"
+        user: ansible-worker
+    
+    - name: clone repository
+      ansible.builtin.git:
+        repo: https://github.com/iphilka/stud-template
+        dest: "/home/ansible-worker/www/"
+        clone: yes
+        update: no
+
+    - name: replace index.html
+      template:
+        src: ../index.html.j2
+        dest: "/home/ansible-worker/www/index.html"
+
+    - name: install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: copy config file
+      copy:
+        src: nginx_config.conf.j2
+        dest: /etc/nginx/sites-available/ansible.iphilka.ru.conf
+      notify:
+        - Reload Nginx
+    
+    - name: make symbol link in sites-enabled
+      file:
+        src: /etc/nginx/sites-available/ansible.iphilka.ru.conf
+        dest: /etc/nginx/sites-enabled/ansible.iphilka.ru.conf
+        state: link
+      notify:
+        - Reload Nginx
+
+  handlers:
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: restarted
+

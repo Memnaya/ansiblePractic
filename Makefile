@@ -3,3 +3,4 @@ ping:
 
 create user:
 	@ansible-playbook playbooks/main.yml -i inventory.ini
+
