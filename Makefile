@@ -1,6 +1,9 @@
 ping:
 	@ansible all -i inventory.ini -m ping
 
-create user:
+check:
 	@ansible-playbook playbooks/main.yml -i inventory.ini
+
+localhost:
+	@ansible-playbook -i hosts.ini playbooks/main.yml
 
